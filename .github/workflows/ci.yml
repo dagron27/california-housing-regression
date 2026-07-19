@@ -1,0 +1,89 @@
+# Continuous Integration for the California Housing notebook.
+#
+# This workflow does a full, from-scratch execution of
+# notebooks/CSCI_441_Project1.ipynb on every push. It is a correctness check, not a
+# "does this notebook still open" check: it re-runs every cell, including
+# the model training/hyperparameter-search cells, in a clean environment.
+#
+# The executed notebook is written to a temporary, non-committed path (see
+# the "Execute notebook" step below) so this workflow never modifies the
+# copy of the notebook that lives in the repository.
+name: CI
+
+# Run on every push, to any branch (no branch filter), and allow manual
+# runs from the Actions tab via workflow_dispatch.
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  execute-notebook:
+    runs-on: ubuntu-latest
+
+    # The notebook trains a RandomForestRegressor plus a RandomizedSearchCV /
+    # GridSearchCV hyperparameter search on top of cross-validation, which is
+    # the slowest part of the run. Give the job more headroom than the
+    # default 6-hour cap is generous, but a tighter, explicit cap makes a
+    # hang (e.g. a stuck download) fail fast instead of eating the whole
+    # default budget.
+    timeout-minutes: 60
+
+    steps:
+      # Check out the repository so the notebook and requirements.txt are
+      # available to the runner.
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Install a CPython interpreter. The notebook itself asserts
+      # sys.version_info >= (3, 7); 3.11 is a current, well-supported
+      # version that satisfies that and has good wheel availability for
+      # scikit-learn/scipy/numpy.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Install the notebook's runtime dependencies from requirements.txt,
+      # plus jupyter and nbconvert, which are needed only to execute the
+      # notebook in CI and are not part of requirements.txt (the notebook
+      # doesn't import them itself).
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install jupyter nbconvert
+
+      # Execute the notebook end to end and write the executed copy to a
+      # runner-temporary directory (outside the checked-out working tree),
+      # NOT with --inplace. This intentionally avoids modifying or
+      # re-committing the notebook that's tracked in git; the executed
+      # output only exists for the lifetime of this CI run.
+      #
+      # --ExecutePreprocessor.timeout bounds how long any single cell may
+      # run before nbconvert aborts it.
+      #
+      # nbconvert's --execute mode fails (non-zero exit) if any cell raises
+      # an exception during execution, which in turn fails this step and
+      # the job -- there is no separate error check needed.
+      #
+      # Note: cell 7 of the notebook downloads a housing-data tarball from
+      # https://github.com/ageron/data/raw/main/housing.tgz over plain
+      # HTTPS (see cell context in the notebook / README Known Issues) and
+      # extracts it with the path-traversal-safe filter="data" argument.
+      # This requires outbound network access, which GitHub-hosted runners
+      # have by default, so no extra configuration should be needed. That
+      # said, this makes the job dependent on a third-party GitHub URL
+      # being reachable; a GitHub outage, rate limiting, or the upstream
+      # file moving/disappearing could cause an otherwise-unrelated CI
+      # failure. If this becomes flaky in practice, consider caching the
+      # tarball (e.g. actions/cache keyed on the URL) or vendoring a copy.
+      - name: Execute notebook
+        run: |
+          mkdir -p "${RUNNER_TEMP}/notebook-output"
+          jupyter nbconvert \
+            --to notebook \
+            --execute \
+            --ExecutePreprocessor.timeout=1800 \
+            --output-dir "${RUNNER_TEMP}/notebook-output" \
+            --output executed_CSCI_441_Project1.ipynb \
+            notebooks/CSCI_441_Project1.ipynb
