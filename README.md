@@ -65,6 +65,14 @@ used in Aurelien Geron's *Hands-On Machine Learning with Scikit-Learn, Keras
 - Saves the final fitted pipeline with `joblib.dump` and demonstrates
   reloading it with `joblib.load`.
 
+## Repository Organization
+
+The notebook was moved from the repository root into `notebooks/` for
+portfolio-wide consistency with sibling repositories; nothing about the
+notebook's own content or cell order changed. `docs/Report.pdf` is the
+assignment's written report deliverable -- see Security / Risk Findings
+below for a redaction fix applied to an earlier version of this file.
+
 ## Dependencies
 
 Inferred from the notebook's `import` statements:
@@ -173,6 +181,18 @@ a CI run never overwrites or modifies the notebook file tracked in git.
      reduce reader confusion about why the variables go unused.
 
 ### Security / Risk Findings
+
+0. **Unredacted student ID in `docs/Report.pdf` — Fixed.** An earlier
+   version of the report PDF carried the same StarID pattern found and
+   redacted elsewhere in this portfolio. True-redacted via PyMuPDF
+   (search + black-fill annotation + apply-redactions), verified via
+   re-extracted text showing zero remaining hits and an intact page
+   count. Because the unredacted version had already been committed,
+   this repository's git history was squashed to a single commit before
+   the initial push to this personal GitHub account specifically to
+   remove that exposure from history, not just from the current working
+   tree -- the old commits containing the unredacted PDF were never
+   pushed anywhere public.
 
 1. **Broad Google Drive permission grant, currently unused — Fixed.** The
    former cell 2, `drive.mount('/content/drive')`, has been removed (see
