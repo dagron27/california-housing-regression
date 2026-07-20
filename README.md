@@ -182,16 +182,15 @@ a CI run never overwrites or modifies the notebook file tracked in git.
 
 ### Security / Risk Findings
 
-0. **Unredacted student ID in `docs/Report.pdf` — Fixed.** An earlier
-   version of the report PDF carried the same StarID pattern found and
-   redacted elsewhere in this portfolio. True-redacted via PyMuPDF
-   (search + black-fill annotation + apply-redactions), verified via
-   re-extracted text showing zero remaining hits and an intact page
-   count. Because the unredacted version had already been committed,
-   this repository's git history was squashed to a single commit before
-   the initial push to this personal GitHub account specifically to
-   remove that exposure from history, not just from the current working
-   tree -- the old commits containing the unredacted PDF were never
+0. **PII exposure in `docs/Report.pdf` — Fixed.** An earlier version of
+   the report PDF contained a PII exposure, found and remediated (true
+   redaction via PyMuPDF, verified via re-extracted text showing zero
+   remaining hits and an intact page count). Because the unredacted
+   version had already been committed, this repository's git history
+   was squashed to a single commit before the initial push to this
+   personal GitHub account specifically to remove that exposure from
+   history, not just from the current working tree -- the old commits
+   containing the unredacted PDF were never
    pushed anywhere public.
 
 1. **Broad Google Drive permission grant, currently unused — Fixed.** The
